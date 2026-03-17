@@ -48,9 +48,15 @@
         const Download = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
         const FileText = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>;
 
-        // --- רכיב תמונה יציבה עם גיבוי ---
+        // --- רכיב תמונה יציבה עם גיבוי ואיפוס שגיאות ---
         const SafeImage = ({ src, alt }) => {
           const [hasError, setHasError] = useState(false);
+          
+          // איפוס מצב השגיאה בכל פעם שקישור התמונה משתנה
+          useEffect(() => {
+            setHasError(false);
+          }, [src]);
+
           return (
             <React.Fragment>
               {!hasError ? (
@@ -250,7 +256,7 @@
           '3C': { 
             title: "חקירת מח\"ש",
             time: "יום שני, 09:00 | סטטוס: טיוח ראיות",
-            imageUrl: "https://avivtz2.github.io/Rule-of-law/images/3c.png",
+            imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
             content: ({ g }) => (
               <React.Fragment>
                 <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
@@ -285,7 +291,7 @@
           '3D': { 
             title: "מתקפה פוליטית",
             time: "יום שני, 14:00 | סטטוס: האשמות אישיות",
-            imageUrl: "https://avivtz2.github.io/Rule-of-law/images/3d.png",
+            imageUrl: "https://images.unsplash.com/photo-1585223326176-b3e34bca07e8?auto=format&fit=crop&w=1200&q=80",
             content: ({ g }) => (
               <React.Fragment>
                 <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
@@ -735,7 +741,7 @@
                   </div>
                   
                   <button
-                    onClick={() => setCurrentStage('start')}
+                    onClick={() => setCurrentStage('1')}
                     disabled={!userData.name || !userData.gender}
                     className="w-full bg-slate-900 text-white py-3 md:py-4 rounded-xl font-bold text-base md:text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
                   >
@@ -809,7 +815,7 @@
                     <span className="font-bold text-gray-900 text-base md:text-lg truncate">חמ"ל פיקוד מחוז</span>
                   </div>
                   <div className="text-xs md:text-sm font-medium text-gray-500 whitespace-nowrap">
-                    {currentStage.startsWith('end') ? 'סיום תרחיש' : currentStage === 'questionnaire' || currentStage === 'report' ? 'תחקיר' : currentStage === 'start' ? 'הכנה לפעילות' : `שלב ${history.length + 1}`}
+                    {currentStage.startsWith('end') ? 'סיום תרחיש' : currentStage === 'questionnaire' || currentStage === 'report' ? 'תחקיר' : `שלב ${history.length + 1}`}
                   </div>
                 </div>
                 {history.length > 0 && (
@@ -831,31 +837,6 @@
               </header>
 
               <main className="max-w-3xl mx-auto px-4 mt-6 md:mt-8">
-
-                {currentStage === 'start' && (
-                  <div className="bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden animate-in fade-in duration-500 border border-slate-100">
-                    <div className="h-48 md:h-80 w-full relative bg-slate-900">
-                      <SafeImage src="https://avivtz2.github.io/Rule-of-law/images/Opening.png" alt="חמ״ל פיקוד" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-90"></div>
-                      <div className="absolute bottom-4 md:bottom-6 px-6 md:px-8 text-white">
-                        <h1 className="text-3xl md:text-5xl font-bold mb-1 md:mb-2 tracking-tight">משבר בעיר המעורבת</h1>
-                        <h2 className="text-lg md:text-xl text-slate-300 font-medium">סימולציית קבלת החלטות: שלטון החוק</h2>
-                      </div>
-                    </div>
-                    <div className="p-6 md:p-10 text-center">
-                      <p className="text-base md:text-lg text-gray-600 mb-8 md:mb-10 leading-relaxed max-w-2xl mx-auto">
-                        שלום {userData.name}. בתרחיש זה, {g('אתה מכהן', 'את מכהנת')} כ{g('מפקד','מפקדת')} מחוז במשטרה. במהלך הימים הקרובים {g('תידרש','תידרשי')} לקבל החלטות חשובות ומשמעותיות תחת לחץ פוליטי, ציבורי ומבצעי. כל החלטה {g('שלך תעצב', 'שלך תעצב')} את המציאות ותיבחן לאור עקרונות הדמוקרטיה ושלטון החוק. הסיום תלוי ברקורד המלא שלך.
-                      </p>
-                      <button
-                        onClick={() => setCurrentStage('1')}
-                        className="w-full md:w-auto inline-flex items-center justify-center px-8 py-4 font-bold text-white bg-slate-800 rounded-xl md:rounded-full hover:bg-slate-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 text-base md:text-lg"
-                      >
-                        <Play className="w-5 h-5 ml-2 fill-current" />
-                        התחלת הסימולציה
-                      </button>
-                    </div>
-                  </div>
-                )}
 
                 {SCENARIOS[currentStage] && (() => {
                   const data = SCENARIOS[currentStage];
