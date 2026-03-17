@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>חמ"ל פיקוד מחוז: משבר בעיר המעורבת</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- html2canvas for downloading the report -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect } = React;
+
+        // --- SVG Icons (Replacement for lucide-react) ---
+        const ShieldAlert = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>;
+        const Play = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="5 3 19 12 5 21 5 3"/></svg>;
+        const AlertTriangle = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
+        const CheckCircle = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
+        const ArrowLeft = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>;
+        const BookOpen = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
+        const Scale = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>;
+        const ChevronLeft = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 18 9 12 15 6"/></svg>;
+        const AlertOctagon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
+        const Trophy = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>;
+        const Award = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>;
+        const XCircle = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>;
+        const User = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+        const ImageIcon = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>;
+        const Download = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
+        const FileText = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>;
+
+        // --- רכיב תמונה יציבה עם גיבוי ---
+        const SafeImage = ({ src, alt }) => {
+          const [hasError, setHasError] = useState(false);
+          return (
+            <React.Fragment>
+              {!hasError ? (
+                <img 
+                  src={src} 
+                  alt={alt} 
+                  onError={() => setHasError(true)}
+                  className="w-full h-full object-cover opacity-85 transition-opacity duration-700" 
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-slate-800 opacity-90">
+                  <ImageIcon className="w-16 h-16 md:w-24 md:h-24 text-slate-600 opacity-30" />
+                </div>
+              )}
+            </React.Fragment>
+          );
+        };
+
+        // --- עץ הסימולציה המסתעף האמיתי (CYOA) ---
+        const SCENARIOS = {
+          '1': {
+            title: "הוראה מלמעלה",
+            time: "יום חמישי, 18:30 | סטטוס: מתיחות גבוהה",
+            imageUrl: "https://images.unsplash.com/photo-1521312527581-6bfbba1a5e19?auto=format&fit=crop&w=1200&q=80",
+            content: ({ g, name }) => (
+              <React.Fragment>
+                <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
+                  שלום {name}, {g('מפקד','מפקדת')} המחוז. לקראת סוף השבוע מתוכננת הפגנת ענק של תנועת מחאה נגד הממשלה בכיכר המרכזית. נכון לרגע זה, אין שום מידע מודיעיני על כוונות לאלימות, והמארגנים הגישו בקשה לרישיון כחוק.
+                </p>
+                <div className="bg-red-50 border-r-4 border-red-500 p-5 md:p-6 rounded-l-lg mb-6 shadow-sm">
+                  <p className="text-gray-900 font-bold italic text-xl md:text-2xl leading-relaxed">
+                    השר לביטחון הפנים מתקשר {g('אליך', 'אלייך')} ודורש בטון תקיף: "אני לא רוצה לראות את ההפגנה הזו קורית! {g('תבטל', 'תבטלי')} להם את הרישיון עכשיו {g('ותמצא', 'ותמצאי')} איזה תירוץ של 'סכנה לשלום הציבור'."
+                  </p>
+                </div>
+              </React.Fragment>
+            ),
+            options: [
+              { 
+                id: '1A', text: (g) => g("ציית לשר ובטל את ההפגנה", "צייתי לשר ובטלי את ההפגנה"), short: "ביטול ההפגנה", next: '2A',
+                feedback: {
+                  success: false, title: 'בג"ץ מתערב ונוצר כאוס',
+                  story: (g) => 'שופטי בג"ץ פסקו שפעולתך הייתה שרירותית, ביטלו את הצו, והתירו את ההפגנה. בעקבות כך, ההמון זועם פי כמה על ניסיון ההשתקה.',
+                  analysis: (g) => 'נכשלת ביישום עקרון חוקיות המינהל. כרשות מבצעת, מותר לך לפעול אך ורק בהתאם לסמכות. ביטול רישיון שרירותי פוגע בזכויות אזרח.'
+                }
+              },
+              { 
+                id: '1B', text: (g) => g("עמוד על החוק ואשר את ההפגנה", "עמדי על החוק ואשרי את ההפגנה"), short: "אישור ההפגנה", next: '2B',
+                feedback: {
+                  success: true, title: 'עימות פוליטי, אך שמירה על החוק',
+                  story: (g) => 'השר זועם, אך ההפגנה מתחילה בצורה מסודרת וחוקית. עם זאת, לקראת הלילה החלה הסלמה מקומית מצד קבוצת מתפרעים.',
+                  analysis: (g) => 'פעלת נכון והגנת על שלטון החוק וזכויות האזרח, גם מול לחץ הדרג המדיני. כעת עליך להתמודד מבצעית עם ההשלכות.'
+                }
+              }
+            ]
+          },
+          '2A': {
+            title: "הפגנת הזעם",
+            time: "שבת, 22:15 | סטטוס: אובדן שליטה",
+            imageUrl: "https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?auto=format&fit=crop&w=1200&q=80",
+            content: ({ g }) => (
+              <React.Fragment>
+                <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
+                  בעקבות הניסיון לבטל את ההפגנה, אלפים יצאו לרחובות בזעם. יש חסימות כבישים והבערת צמיגים. השר מתקשר {g('אליך', 'אלייך')} שוב.
+                </p>
+                <div className="bg-red-50 border-r-4 border-red-500 p-5 md:p-6 rounded-l-lg mb-6 shadow-sm">
+                  <p className="text-gray-900 font-bold italic text-xl md:text-2xl leading-relaxed">
+                    "השופטים האלה מנותקים! {g('שלח', 'שלחי')} עכשיו כוחות לבתים של חמשת מנהיגי המחאה {g('ותעצור', 'ותעצרי')} אותם. {g('שבור', 'שברי')} להם את ההנהגה מיד!"
+                  </p>
+                  <p className="text-sm md:text-base text-red-600 mt-4 font-bold">* ידוע לך שאין בידך צווי מעצר ואין שום עילה חוקית למעצרם בבתיהם.</p>
+                </div>
+              </React.Fragment>
+            ),
+            options: [
+              { 
+                id: '2A_A', text: (g) => g("בצע את מעצרי השווא בבתים", "בצעי את מעצרי השווא בבתים"), short: "מעצרי שווא", next: '3A',
+                feedback: {
+                  success: false, title: 'מעצרי שווא שרירותיים',
+                  story: (g) => 'המעצרים הליליים בוצעו. התקשורת מדווחת על דיכוי והפרת זכויות אדם. עורכי הדין דורשים שחרור מיידי.',
+                  analysis: (g) => 'ביצעת פקודה בלתי חוקית בעליל. שלטון החוק מגן על חירות האזרח. מעצר ללא צו וללא עילה הוא שלילת חירות שרירותית.'
+                }
+              },
+              { 
+                id: '2A_B', text: (g) => g("סרב לפקודה והכל את ההפגנה", "סרבי לפקודה והכילי את ההפגנה"), short: "סירוב לפקודה", next: '3B',
+                feedback: {
+                  success: true, title: 'הגנה על חירות הפרט',
+                  story: (g) => 'סירבת לבצע את מעצרי השווא. השר רותח ומאיים להדיח אותך. ההפגנה ממשיכה לשתק את העיר והלחץ עליך גובר.',
+                  analysis: (g) => 'זיהית נכון פקודה בלתי חוקית בעליל שדגל שחור מתנוסס מעליה. עמדת על משמר הדמוקרטיה וזכויות האדם.'
+                }
+              }
+            ]
+          },
+          '2B': {
+            title: "מבחן האמצעים בשטח",
+            time: "שבת, 23:30 | סטטוס: הפעלת כוח",
+            imageUrl: "https://images.unsplash.com/photo-1596728076043-3051fb2c311c?auto=format&fit=crop&w=1200&q=80",
+            content: ({ g }) => (
+              <React.Fragment>
+                <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
+                  ההפגנה שאושרה מתקיימת כדין, אך לקראת חצות קבוצת שוליים קיצונית מתחילה ליידות אבנים על שוטרים.
+                </p>
+                <div className="bg-blue-50 border-r-4 border-blue-500 p-5 md:p-6 rounded-l-lg mb-6 shadow-sm">
+                  <p className="text-gray-900 font-bold italic text-xl md:text-2xl leading-relaxed">
+                    מפקד הכוח בשטח עולה מולך בקשר: "יש לי בתא המטען ציוד פיזור חדש לניסוי. הוא עדיין לא אושר משפטית, אבל הוא יעיף אותם בשנייה. {g('תאשר', 'תאשרי')} לי הפעלה."
+                  </p>
+                </div>
+              </React.Fragment>
+            ),
+            options: [
+              { 
+                id: '2B_A', text: (g) => g("אשר הפעלה של האמל\"ח הלא-תקני", "אשרי הפעלה של האמל\"ח הלא-תקני"), short: "אישור אמל\"ח לא-תקני", next: '3C',
+                feedback: {
+                  success: false, title: 'פצועים קשה בשטח',
+                  story: (g) => 'האמל"ח הופעל. הפיזור היה מהיר אך כמה מפגינים נפצעו קשה באורח בלתי הפיך בשל השימוש באמצעי הלא-תקני והלא-מפוקח.',
+                  analysis: (g) => 'העדפת את "מבחן התוצאה" על פני הנהלים. נטילת סמכות להשתמש בכוח שלא אושר בחוק היא פגיעה אנושה בשלטון החוק וחוקיות המינהל.'
+                }
+              },
+              { 
+                id: '2B_B', text: (g) => g("אסור שימוש בציוד לא מאושר", "אסרי שימוש בציוד לא מאושר"), short: "איסור אמל\"ח", next: '3D',
+                feedback: {
+                  success: true, title: 'שמירה על החוק תחת אש',
+                  story: (g) => 'הסדר הושב באמצעים החוקיים הקיימים. הפיזור היה איטי ורכוש רב ניזוק, אך לא נגרם נזק גופני בלתי הפיך לאזרחים.',
+                  analysis: (g) => 'הוכחת שהרשות המבצעת כפופה לחוק גם בשעת חירום ומתח. פעלת בהתאם לעקרון חוקיות המינהל וללא חריגה מסמכות.'
+                }
+              }
+            ]
+          },
+          '3A': { 
+            title: "החקירה הלילית",
+            time: "יום ראשון, 04:00 | סטטוס: חקירה תחת לחץ",
+            imageUrl: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=1200&q=80",
+            content: ({ g }) => (
+              <React.Fragment>
+                <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
+                  עצרתם את מנהיגי המחאה במעצרי שווא, אך אין לכם שום ראיות נגדם כדי להצדיק את המשך החזקתם מול שופט בבוקר. 
+                </p>
+                <div className="bg-purple-50 border-r-4 border-purple-500 p-5 md:p-6 rounded-l-lg mb-6 shadow-sm">
+                  <p className="text-gray-900 font-bold italic text-xl md:text-2xl leading-relaxed">
+                    קצין החקירות פונה {g('אליך', 'אלייך')}: "{g('תאשר', 'תאשרי')} לי למנוע מהם מפגש עם עורך דין ולהפעיל עליהם אמצעי לחץ קיצוניים (מניעת שינה מוחלטת). הם יישברו וייתנו לנו הודאות שנוכל להציג."
+                  </p>
+                </div>
+              </React.Fragment>
+            ),
+            options: [
+              { 
+                id: '3A_A', text: (g) => g("אשר הפעלת לחץ ומניעת עו\"ד", "אשרי הפעלת לחץ ומניעת עו\"ד"), short: "הפעלת אמצעי לחץ", next: '4A',
+                feedback: {
+                  success: false, title: 'פגיעה בזכויות נחקרים',
+                  story: (g) => 'החשודים נשברים ומודים בדברים שלא עשו. בית המשפט דוחה את ההודאות בטענה שנגבו תוך התעללות.',
+                  analysis: (g) => 'רמסת את הזכות להליך הוגן. במדינה דמוקרטית לחשודים יש זכויות יסוד שנועדו להגן עליהם מפני דורסנות המערכת.'
+                }
+              },
+              { 
+                id: '3A_B', text: (g) => g("שמור על זכויות הנחקרים", "שמרי על זכויות הנחקרים"), short: "זכויות עצורים", next: '4B',
+                feedback: {
+                  success: true, title: 'התפוררות התיק השקרי',
+                  story: (g) => 'החשודים נפגשו עם עורכי דינם. בבוקר השופט משחרר אותם מיד ונוזף במשטרה בחריפות על מעצרי השווא.',
+                  analysis: (g) => 'עצרת התדרדרות. למרות מעצר השווא, שמרת על הזכות להליך הוגן בחדר החקירות ומנעת עיוות דין מוחלט.'
+                }
+              }
+            ]
+          },
+          '3B': { 
+            title: "עקיפת סמכות",
+            time: "יום ראשון, 08:00 | סטטוס: משבר אמון",
+            imageUrl: "https://images.unsplash.com/photo-1555848962-6e79363ec58f?auto=format&fit=crop&w=1200&q=80",
+            content: ({ g }) => (
+              <React.Fragment>
+                <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
+                  סירבת לפקודה הבלתי חוקית. השר זועם, ומחליט לעקוף אותך. הוא מוציא פקודה ישירה למפקד יחידת העילית המחוזית שלך לצאת מיד ולעצור את האזרחים, מעל לראשך.
+                </p>
+                <div className="bg-slate-100 border-r-4 border-slate-500 p-5 md:p-6 rounded-l-lg mb-6 shadow-sm">
+                  <p className="text-gray-900 font-bold italic text-xl md:text-2xl leading-relaxed">
+                    מפקד היחידה מגיע למשרדך: "המפקד, קיבלתי הוראה מהשר לצאת לפעולה הבוקר. אני יודע שאתה מתנגד, אבל זו הוראה מלמעלה. האם לצאת?"
+                  </p>
+                </div>
+              </React.Fragment>
+            ),
+            options: [
+              { 
+                id: '3B_A', text: (g) => g("אפשר לו לצאת לפעולה", "אפשרי לו לצאת לפעולה"), short: "כניעה להתערבות", next: '4C',
+                feedback: {
+                  success: false, title: 'כניעה לפוליטיזציה',
+                  story: (g) => 'כוחות היחידה יוצאים ומבצעים את מעצרי השווא. אתה עמדת מנגד בעוד סמכותך ועקרונות החוק נרמסו בתוך המחוז שלך.',
+                  analysis: (g) => 'כשלת בתפקידך כשומר סף. שלטון החוק דורש מקצינים בכירים למנוע באופן אקטיבי ביצוע פעולות לא חוקיות ולא להעלים עין.'
+                }
+              },
+              { 
+                id: '3B_B', text: (g) => g("אסור עליו לצאת וגבה אותו מול השר", "אסרי עליו לצאת וגבי אותו מול השר"), short: "חסימת ההתערבות", next: '4D',
+                feedback: {
+                  success: true, title: 'שמירה על הפיקוד והחוק',
+                  story: (g) => 'חסמת את הפעולה לחלוטין. השר מכנס מסיבת עיתונאים ומודיע על פתיחת הליך לפיטוריך בטענה של "מרד".',
+                  analysis: (g) => 'הגנת על עקרון חוקיות המינהל ועל אזרחים חפים מפשע, ומנעת פוליטיזציה של כוחות האכיפה שתחת פיקודך.'
+                }
+              }
+            ]
+          },
+          '3C': { 
+            title: "חקירת מח\"ש",
+            time: "יום שני, 09:00 | סטטוס: טיוח ראיות",
+            imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
+            content: ({ g }) => (
+              <React.Fragment>
+                <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
+                  האמל"ח שהפעלת בניגוד לנהלים פצע אזרחים, והמחלקה לחקירות שוטרים (מח"ש) פושטת על מטה המחוז. 
+                </p>
+                <div className="bg-slate-100 border-r-4 border-slate-500 p-5 md:p-6 rounded-l-lg mb-6 shadow-sm">
+                  <p className="text-gray-900 font-bold italic text-xl md:text-2xl leading-relaxed">
+                    קצין הקשר ניגש {g('אליך', 'אלייך')}: "יש לי את הקלטות הקשר. שומעים שם שאישרת אמצעי לא תקני. אני יכול למחוק את הקבצים ולהגיד למח"ש שהייתה תקלה."
+                  </p>
+                </div>
+              </React.Fragment>
+            ),
+            options: [
+              { 
+                id: '3C_A', text: (g) => g("אשר את מחיקת הראיות", "אשרי את מחיקת הראיות"), short: "מחיקת ראיות (שיבוש)", next: '4A',
+                feedback: {
+                  success: false, title: 'שיבוש הליכי משפט',
+                  story: (g) => 'הקלטות נמחקו. חוקרי מח"ש יוצאים בידיים ריקות, אך צוותי הסייבר שלהם מתחילים לעבוד על שחזור הקבצים במעבדה.',
+                  analysis: (g) => 'פגעת בזכות להליך הוגן ובטוהר ההליך הפלילי. השמדת ראיות הופכת את המשטרה לגוף הפועל מעל לחוק.'
+                }
+              },
+              { 
+                id: '3C_B', text: (g) => g("מסור את הראיות כנדרש", "מסרי את הראיות כנדרש"), short: "מסירת ראיות למח\"ש", next: '4E',
+                feedback: {
+                  success: true, title: 'לקיחת אחריות',
+                  story: (g) => 'הקלטות נמסרו. מח"ש מתחילה לאסוף עדויות, וקצינים בכוח הזעם טוענים שאתה מפקיר אותם.',
+                  analysis: (g) => 'שמרת על שקיפות וכיבוד רשויות החוק. במדינה דמוקרטית רשויות האכיפה חייבות להיות כפופות לביקורת וחקירה מלאה.'
+                }
+              }
+            ]
+          },
+          '3D': { 
+            title: "מתקפה פוליטית",
+            time: "יום שני, 14:00 | סטטוס: האשמות אישיות",
+            imageUrl: "https://images.unsplash.com/photo-1585223326176-b3e34bca07e8?auto=format&fit=crop&w=1200&q=80",
+            content: ({ g }) => (
+              <React.Fragment>
+                <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
+                  מכיוון שהקפדת על פיזור ההפגנה באמצעים חוקיים בלבד, לקח זמן להחזיר את הסדר. פוליטיקאים מאשימים אותך בטלוויזיה שאתה "חלש ואשם בנזק לעיר".
+                </p>
+                <div className="bg-yellow-50 border-r-4 border-yellow-500 p-5 md:p-6 rounded-l-lg mb-6 shadow-sm">
+                  <p className="text-gray-900 font-bold italic text-xl md:text-2xl leading-relaxed">
+                    כתב תחקירים מוכר מציע לך עסקה: "אם {g('תדליף', 'תדליפי')} לי תיקי חקירה סודיים שמוכיחים שהפוליטיקאים האלה מושחתים, אני אנקה את השם שלך בתקשורת."
+                  </p>
+                </div>
+              </React.Fragment>
+            ),
+            options: [
+              { 
+                id: '3D_A', text: (g) => g("הדלף את תיקי החקירה", "הדליפי את תיקי החקירה"), short: "הדלפת תיקים", next: '4F',
+                feedback: {
+                  success: false, title: 'ניצול סמכות ופגיעה בחוק',
+                  story: (g) => 'התיקים דלפו. הפוליטיקאים מובכים קשות ושמך נוקה, אך מח"ש פותחת בחקירה לאיתור המדליף מתוך המשטרה.',
+                  analysis: (g) => 'ניצלת מידע מודיעיני רגיש לצרכים אישיים והפרת את סודיות החקירה. זוהי חריגה חמורה מסמכות ופגיעה באמון הציבור.'
+                }
+              },
+              { 
+                id: '3D_B', text: (g) => g("סרב להדלפה וספוג את האש", "סרבי להדלפה וספגי את האש"), short: "סירוב להדלפה", next: '4G',
+                feedback: {
+                  success: true, title: 'יושרה ציבורית',
+                  story: (g) => 'סירבת. הקמפיין נגדך נמשך וגובר, אך מידע חסוי נשאר חסוי והיושרה המקצועית של המחוז נשמרת.',
+                  analysis: (g) => 'הגנת על טוהר המידות וההליך הפלילי. לא נכנעת לפיתוי להשתמש בכוח המשטרתי לצורך התגוננות פוליטית אישית.'
+                }
+              }
+            ]
+          },
+          
+          // --- רמה 4 ---
+          '4A': { 
+            title: "סחיטה מבית",
+            time: "יום רביעי, 10:00 | סטטוס: השחתה",
+            imageUrl: "https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=1200&q=80",
+            content: ({ g }) => (
+              <React.Fragment>
+                <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
+                  הפעולות הלא חוקיות (העלמת ראיות, מעצרים שרירותיים) הסתבכו. 
+                </p>
+                <div className="bg-slate-100 border-r-4 border-slate-500 p-5 md:p-6 rounded-l-lg mb-6 shadow-sm">
+                  <p className="text-gray-900 font-bold italic text-xl md:text-2xl leading-relaxed">
+                    קצין המחשוב מגיע למשרדך: "המפקד, שמרתי עותק של החומרים המפלילים אצלי. אם תדאג לקדם אותי לתפקיד סגן מפקד המחוז, הדיסק הזה יושמד לתמיד. אם לא... מח"ש ישמחו לקבל אותו."
+                  </p>
+                </div>
+              </React.Fragment>
+            ),
+            options: [
+              { 
+                id: '4A_A', text: (g) => g("היכנע לסחיטה וקדם אותו", "היכנעי לסחיטה וקדמי אותו"), short: "כניעה לסחיטה", next: 'end_Corruption',
+                feedback: {
+                  success: false, title: 'פשע גורר פשע', story: (g) => 'קידמת אותו, אך הסחיטה רק תחמיר. הפכת לבובת חוטים בידי עבריינים במדים.', analysis: (g) => 'ריסקת את שלטון החוק לחלוטין. התנהלות של כנופיה השתלטה על המערכת שאמורה לאכוף את החוק.'
+                }
+              },
+              { 
+                id: '4A_B', text: (g) => g("עצור אותו והסגר את עצמך", "עצרי אותו והסגירי את עצמך"), short: "הסגרה למח\"ש", next: 'end_Prison',
+                feedback: {
+                  success: true, title: 'סוף פסוק', story: (g) => 'עצרת אותו ומסרת את הדיסק המקורי למח"ש כולל הודאה מלאה על חלקך.', analysis: (g) => 'ברגע האחרון עצרת את כדור השלג של השחיתות, אך עליך לשאת באחריות על הפגיעה בזכות להליך הוגן.'
+                }
+              }
+            ]
+          },
+          '4B': { 
+            title: "הצעת חסינות",
+            time: "יום רביעי, 12:00 | סטטוס: ועדת חקירה",
+            imageUrl: "https://images.unsplash.com/photo-1450101499163-c8848c66cb85?auto=format&fit=crop&w=1200&q=80",
+            content: ({ g }) => (
+              <React.Fragment>
+                <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
+                  מוקמת ועדת חקירה ממשלתית לבחינת המחדלים סביב ההפגנה. 
+                </p>
+                <div className="bg-yellow-50 border-r-4 border-yellow-500 p-5 md:p-6 rounded-l-lg mb-6 shadow-sm">
+                  <p className="text-gray-900 font-bold italic text-xl md:text-2xl leading-relaxed">
+                    יועץ השר מציע לך עסקה סודית: "אנחנו נדאג לך לחסינות משפטית, בתנאי {g('שתעיד', 'שתעידי')} בוועדה שמי שאשם בכל הבלאגן והאלימות הם מפקדי השטח שלך, שפעלו בניגוד להוראותיך."
+                  </p>
+                </div>
+              </React.Fragment>
+            ),
+            options: [
+              { 
+                id: '4B_A', text: (g) => g("הסכם לעסקה וגלגל אשמה", "הסכימי לעסקה וגלגלי אשמה"), short: "עסקת חסינות", next: 'end_Coward',
+                feedback: {
+                  success: false, title: 'הפקרת פקודים', story: (g) => 'זרקת את קציניך מתחת לגלגלים כדי להציל את עצמך. הם מועמדים לדין.', analysis: (g) => 'פגעת ביושרה הציבורית ובאחריות הפיקודית. שימוש במניפולציות משפטיות כדי להימלט מאחריות פוגע באמון הציבור.'
+                }
+              },
+              { 
+                id: '4B_B', text: (g) => g("סרב לעסקה וקח אחריות", "סרבי לעסקה וקחי אחריות"), short: "לקיחת אחריות", next: 'end_Accountable',
+                feedback: {
+                  success: true, title: 'אחריות של מפקד', story: (g) => 'עמדת בוועדה והודית בשגיאות המבצעיות שלך ללא תירוצים וללא הפקרת פקודיך.', analysis: (g) => 'הפגנת כיבוד רשויות ויושרה. במדינה דמוקרטית, נשיאה באחריות על טעויות היא תנאי הכרחי לשלטון חוק תקין.'
+                }
+              }
+            ]
+          },
+          '4C': { 
+            title: "השעיה או נאמנות",
+            time: "יום רביעי, 15:00 | סטטוס: איום בפיטורים",
+            imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80",
+            content: ({ g }) => (
+              <React.Fragment>
+                <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
+                  מכיוון שאפשרת לשר לעקוף אותך, הוא מרגיש שהוא שולט בך.
+                </p>
+                <div className="bg-red-50 border-r-4 border-red-500 p-5 md:p-6 rounded-l-lg mb-6 shadow-sm">
+                  <p className="text-gray-900 font-bold italic text-xl md:text-2xl leading-relaxed">
+                    השר קורא לך למשרדו: "אני מוכן לקדם אותך למפכ"ל, אבל אני דורש שתחתום לי על 'הצהרת נאמנות' חשאית שבה אתה מתחייב לבצע את מדיניותי גם אם היועץ המשפטי לממשלה אוסר זאת."
+                  </p>
+                </div>
+              </React.Fragment>
+            ),
+            options: [
+              { 
+                id: '4C_A', text: (g) => g("חתום על הצהרת הנאמנות", "חתמי על הצהרת הנאמנות"), short: "נאמנות לשר", next: 'end_Militia',
+                feedback: {
+                  success: false, title: 'לידתה של מיליציה פוליטית', story: (g) => 'חתמת. הפכת את משטרת ישראל לזרוע פוליטית פרטית של פוליטיקאי.', analysis: (g) => 'הרסת את שלטון החוק. כפיפות עיוורת לדרג הפוליטי בניגוד לייעוץ המשפטי מחסלת את שלטון החוק ויוצרת משטר רודני.'
+                }
+              },
+              { 
+                id: '4C_B', text: (g) => g("סרב וחשוף את הדרישה", "סרבי וחשפי את הדרישה"), short: "חשיפת השחיתות", next: 'end_Resign',
+                feedback: {
+                  success: true, title: 'פיצוץ פומבי', story: (g) => 'הדלפת את הדרישה לתקשורת והתפטרת. השר נאלץ להתמודד עם סערה ציבורית.', analysis: (g) => 'למרות הכניעה הקודמת שלך, ברגע האמת הצבת קו אדום והגנת על הפרדת הרשויות ועצמאות מערכת האכיפה.'
+                }
+              }
+            ]
+          },
+          '4D': { 
+            title: "קיצוץ תקציבים",
+            time: "יום רביעי, 10:00 | סטטוס: ייבוש המחוז",
+            imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80",
+            content: ({ g }) => (
+              <React.Fragment>
+                <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
+                  בלמת בגופך פקודות בלתי חוקיות. בית המשפט הוציא צו הגנה המונע מהשר לפטר אותך.
+                </p>
+                <div className="bg-red-50 border-r-4 border-red-500 p-5 md:p-6 rounded-l-lg mb-6 shadow-sm">
+                  <p className="text-gray-900 font-bold italic text-xl md:text-2xl leading-relaxed">
+                    בתגובה, השר משתמש בסמכותו החוקית ומקצץ את התקציב של מחוז המשטרה שלך לאפס. אין לך כסף לדלק בניידות או לשעות נוספות לשוטרים. "נראה איך תסתדרו בלעדיי," הוא אומר.
+                  </p>
+                </div>
+              </React.Fragment>
+            ),
+            options: [
+              { 
+                id: '4D_A', text: (g) => g("התפטר במחאה כדי שהמחוז יתפקד", "התפטרי במחאה כדי שהמחוז יתפקד"), short: "התפטרות במחאה", next: 'end_Martyr',
+                feedback: {
+                  success: true, title: 'הקרבה אישית', story: (g) => 'התפטרת כדי לשחרר את התקציבים לפקודיך. הציבור מריע לך על עמידתך האיתנה.', analysis: (g) => 'הוכחת יושרה שלטונית ומסירות. לעיתים הגנה על שלטון החוק גובה מחיר אישי כבד מהעומדים על משמרתו.'
+                }
+              },
+              { 
+                id: '4D_B', text: (g) => g("הישאר ונהל את המחוז ללא תקציב", "הישארי ונהלי את המחוז ללא תקציב"), short: "מאבק ללא תקציב", next: 'end_Shield',
+                feedback: {
+                  success: true, title: 'מאבק עיקש', story: (g) => 'נשארת. השוטרים תורמים מכיסם כדי להמשיך להגן על העיר. השר נכנע לבסוף ללחץ הציבורי.', analysis: (g) => 'לא נכנעת לעריצות המינהלית. הוכחת שאכיפת חוק במדינה דמוקרטית תלויה קודם כל באנשים המחויבים לעקרונות שלטון החוק.'
+                }
+              }
+            ]
+          },
+          '4E': { 
+            title: "שביתת השוטרים",
+            time: "יום רביעי, 16:00 | סטטוס: מרד פנימי",
+            imageUrl: "https://images.unsplash.com/photo-1453873531674-2151bcd01707?auto=format&fit=crop&w=1200&q=80",
+            content: ({ g }) => (
+              <React.Fragment>
+                <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
+                  מסרת את הראיות למח"ש. בעקבות כך, שוטרים רבים זועמים ומרגישים מופקרים. מחר מתקיים משחק ספורט ענק וטעון בעיר (דרבי).
+                </p>
+                <div className="bg-yellow-50 border-r-4 border-yellow-500 p-5 md:p-6 rounded-l-lg mb-6 shadow-sm">
+                  <p className="text-gray-900 font-bold italic text-xl md:text-2xl leading-relaxed">
+                    נציג השוטרים מודיע: "כולנו מוציאים מחר חופשת מחלה מאורגנת. אף שוטר לא יגיע לאבטח את המשחק עד שלא תתחייב להגן עלינו מפני חקירות מח"ש!"
+                  </p>
+                </div>
+              </React.Fragment>
+            ),
+            options: [
+              { 
+                id: '4E_A', text: (g) => g("היכנע כדי למנוע אסון במשחק", "היכנעי כדי למנוע אסון במשחק"), short: "כניעה לשביתה", next: 'end_Weak',
+                feedback: {
+                  success: false, title: 'אובדן הפיקוד', story: (g) => 'נכנעת. השוטרים אבטחו את המשחק, אך המשטרה באזורך איבדה את יכולתה לחקור את עצמה לעולם.', analysis: (g) => 'פגעת בשוויון בפני החוק. מתן חסינות לשוטרים מפני חקירה יוצרת מעמד מיוחד שאינו כפוף לחוק כשאר האזרחים.'
+                }
+              },
+              { 
+                id: '4E_B', text: (g) => g("איים בפיטורים על מי שישבות", "איימי בפיטורים על מי שתשבות"), short: "אכיפת הפיקוד", next: 'end_Strict',
+                feedback: {
+                  success: true, title: 'שמירה על החוק והסדר', story: (g) => 'השביתה בוטלה. השוטרים הגיעו זועפים אך ביצעו את המשימה. מח"ש ממשיכה בעבודתה.', analysis: (g) => 'הבהרת שגם כוחות האכיפה כפופים לחוק ללא פשרות, ושאיומים אינם יכולים להוות תחליף לטוהר ההליך הפלילי.'
+                }
+              }
+            ]
+          },
+          '4F': { 
+            title: "חיפוש המדליף",
+            time: "יום רביעי, 13:00 | סטטוס: חקירה פנימית",
+            imageUrl: "https://images.unsplash.com/photo-1569003339405-ea396a5a8a90?auto=format&fit=crop&w=1200&q=80",
+            content: ({ g }) => (
+              <React.Fragment>
+                <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
+                  הדלפת את המסמכים החסויים, והפוליטיקאים שמיררו את חייך הודחו בבושת פנים. עם זאת, היועמ"ש דורש למצוא את המדליף מתוך המשטרה שהפר את סודיות החקירה.
+                </p>
+                <div className="bg-slate-100 border-r-4 border-slate-500 p-5 md:p-6 rounded-l-lg mb-6 shadow-sm">
+                  <p className="text-gray-900 font-bold italic text-xl md:text-2xl leading-relaxed">
+                    ראש צוות החקירה הפנימית אומר לך: "אנחנו חושדים שפקוד זוטר שלך ביצע את ההדלפה. מספיק שתחתום על המסמך הזה, ואנחנו נעמיד אותו לדין ונסגור את התיק."
+                  </p>
+                </div>
+              </React.Fragment>
+            ),
+            options: [
+              { 
+                id: '4F_A', text: (g) => g("חתום והפל את הפקוד הזוטר", "חתמי והפלילי את הפקוד הזוטר"), short: "הפללת חף מפשע", next: 'end_Corruption',
+                feedback: {
+                  success: false, title: 'הרשעת שווא', story: (g) => 'השוטר הזוטר פוטר ונכלא בגללך, בזמן שאתה חגגת את הצלחתך. המצפון שלך יוכתם לנצח.', analysis: (g) => 'רמסת את הזכות למשפט צדק והפצת שקרים. הקרבת אזרח חף מפשע כדי לחפות על עבירותיך היא שפל אנטי-דמוקרטי.'
+                }
+              },
+              { 
+                id: '4F_B', text: (g) => g("הודה שאתה הוא המדליף", "הודי שאת היא המדליפה"), short: "הודאה בהדלפה", next: 'end_Whistleblower',
+                feedback: {
+                  success: true, title: 'חשיפת האמת', story: (g) => 'הודית. אתה מודח מהמשטרה אך הופך לגיבור של התנועה לאיכות השלטון שחושף שחיתויות.', analysis: (g) => 'אמנם ביצעת עבירה מוקדם יותר, אך סירבת להוסיף חטא על פשע. מנעת פגיעה בשוויון ובזכויות של אדם חף מפשע.'
+                }
+              }
+            ]
+          },
+          '4G': { 
+            title: "הגנה על בית המשפט",
+            time: "יום רביעי, 18:00 | סטטוס: עצרת מול בית המשפט",
+            imageUrl: "https://images.unsplash.com/photo-1585223326176-b3e34bca07e8?auto=format&fit=crop&w=1200&q=80",
+            content: ({ g }) => (
+              <React.Fragment>
+                <p className="text-base md:text-lg text-gray-800 mb-5 md:mb-6 leading-relaxed">
+                  שמרת על חוקיות המינהל לאורך כל הדרך. כעת, משפט מתנהל נגד פוליטיקאי מסית, וברחובות משתוללת הסתה נגד השופטים.
+                </p>
+                <div className="bg-yellow-50 border-r-4 border-yellow-500 p-5 md:p-6 rounded-l-lg mb-6 shadow-sm">
+                  <p className="text-gray-900 font-bold italic text-xl md:text-2xl leading-relaxed">
+                    נשיא בית המשפט מתקשר {g('אליך', 'אלייך')} בבהלה: "ההמון מתקרב לבית המשפט ויש כוונות פריצה. פוליטיקאים נמצאים איתם. אני מבקש שמשטרת ישראל תציב חומת מגן פיזית סביב בית המשפט, גם אם זה יגרור עימות מול הדרג הפוליטי."
+                  </p>
+                </div>
+              </React.Fragment>
+            ),
+            options: [
+              { 
+                id: '4G_A', text: (g) => g("סרב להגן כדי לא להכעיס פוליטיקאים", "סרבי להגן כדי לא להכעיס פוליטיקאים"), short: "הפקרת בית המשפט", next: 'end_Collapse',
+                feedback: {
+                  success: false, title: 'הפקרת עצמאות המשפט', story: (g) => 'ההמון פרץ לבית המשפט והשופטים נמלטו. מערכת המשפט שותקה מאימה.', analysis: (g) => 'כשלת בהגנה על הפרדת הרשויות. ללא מערכת משפט עצמאית ומוגנת מפני אלימות, אין שלטון חוק ואין דמוקרטיה.'
+                }
+              },
+              { 
+                id: '4G_B', text: (g) => g("פרוס כוחות והגן על בית המשפט", "פרסי כוחות והגני על בית המשפט"), short: "הגנה על רשויות", next: 'end_Democrat',
+                feedback: {
+                  success: true, title: 'חומת מגן דמוקרטית', story: (g) => 'חצצת בגופך ובגוף שוטריך בין ההמון למערכת המשפט. בית המשפט המשיך לפעול ללא מורא.', analysis: (g) => 'הוכחת הלכה למעשה את מחויבות המשטרה להגנה על הפרדת הרשויות ועצמאות הרשות השופטת, שהן תשתית שלטון החוק.'
+                }
+              }
+            ]
+          }
+        };
+
+        // --- מסכי הסיום הנגזרים באופן ישיר (8 סיומות אפשריות!) ---
+        const ENDINGS = {
+          'end_Corruption': { 
+            title: "סיום: עריצות והשחתה", icon: AlertOctagon, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200',
+            story: (g) => 'שרשרת הבחירות שלך, שכללה מחיקת ראיות והכנעות לסחיטות, הובילה להרשעה פלילית שלך. סיימת מאחורי סורג ובריח והפכת לסמל השחיתות הממסדית.',
+            analysis: (g) => 'זהו הכישלון המוחלט של שלטון החוק. פגעת בזכות להליך הוגן ובטוהר המידות. כשהרשות המבצעת מעלימה ראיות ומקדמת עבריינים, היא מרסקת את הדמוקרטיה.'
+          },
+          'end_Prison': { 
+            title: "סיום: כלא והתפכחות", icon: XCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200',
+            story: (g) => `ביצעת עבירות חמורות בדרך, אך ברגע האמת בחרת ${g('להסגיר את עצמך ולהודות', 'להסגיר את עצמך ולהודות')}. ${g('אתה מרצה', 'את מרצה')} עונש מאסר על שיבוש הליכים, אך מצפונך שקט.`,
+            analysis: (g) => 'למרות הכישלון בשמירה על הזכות להליך הוגן, הבנת לבסוף את ערך השוויון בפני החוק - גם מפקד המשטרה כפוף לחוק ונושא באחריות על מעשיו.'
+          },
+          'end_Coward': { 
+            title: "סיום: הישרדות מבישה", icon: AlertTriangle, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200',
+            story: (g) => `ניצלת את העסקה כדי ${g('להינצל', 'להינצל')} מהעמדה לדין על המחדלים והשארת את פקודיך לשלם את המחיר. ${g('המשכת', 'המשכת')} בתפקידך, אך איבדת את אמון השוטרים לנצח.`,
+            analysis: (g) => 'אמנם שרדת משפטית, אך פגעת באמון הציבור ובאחריות הפיקודית. שימוש במניפולציות כדי להימלט מדין פוגע בעקרון שוויון הכל בפני החוק.'
+          },
+          'end_Accountable': { 
+            title: "סיום: אחריות מוסדית", icon: Scale, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200',
+            story: (g) => `${g('לקחת', 'לקחת')} אחריות מלאה בוועדת החקירה על הפעלת הכוח השגויה. ${g('קיבלת', 'קיבלת')} הערה משמעתית חמורה, אך זכית בהערכה עצומה מצד הציבור על יושרתך.`,
+            analysis: (g) => 'טעית בשיקול הדעת המבצעי מוקדם יותר, אך הגנת על שלטון החוק המוסדי. נשיאה באחריות על ידי בכירים היא תנאי הכרחי לתיקון המערכת ולדמוקרטיה מתפקדת.'
+          },
+          'end_Militia': { 
+            title: "סיום: מיליציה פוליטית", icon: ShieldAlert, color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-300',
+            story: (g) => 'חתמת על הצהרת נאמנות סודית לשר בתמורה לקידום. המשטרה הפסיקה להגן על האזרחים והפכה לזרוע פוליטית שמדכאת את מתנגדי השלטון.',
+            analysis: (g) => 'חיסלת הלכה למעשה את שלטון החוק. כפיפות עיוורת לדרג הפוליטי שאינה כפופה לייעוץ המשפטי ולחוק יוצרת עריצות ופוגעת בזכויות אדם באופן חמור.'
+          },
+          'end_Resign': { 
+            title: "סיום: התפטרות מהדהדת", icon: Trophy, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200',
+            story: (g) => `התפטרת בשידור חי וחשפת את דרישת הנאמנות המושחתת של השר. הקרבת את הקריירה שלך, אבל עוררת סערה שהובילה להקמת ועדת חקירה נגד השר.`,
+            analysis: (g) => 'הגנת על עקרון חוקיות המינהל והפרדת הרשויות. הוכחת שמחויבותו הראשונה של נושא משרה ציבורית היא לחוק ולמשטר הדמוקרטי, ולא לשר הממונה.'
+          },
+          'end_Martyr': { 
+            title: "סיום: הקרבה ערכית", icon: Award, color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-200',
+            story: (g) => 'התפטרת כדי שהשר ישחרר את תקציב המשטרה ושהמחוז יוכל להגן על התושבים. הפכת לסמל של מסירות ציבורית ללא אגו.',
+            analysis: (g) => 'לעיתים ההגנה על שלטון החוק וחיי האזרחים גובה מחיר אישי מנושאי המשרה. הוכחת שירות ציבורי טהור ללא היצמדות לכיסא.'
+          },
+          'end_Shield': { 
+            title: "סיום: מגן הציבור", icon: ShieldAlert, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200',
+            story: (g) => 'נאבקת לייצב את המחוז גם כשקוצץ התקציב. השוטרים עמדו לצידך והשר נכנע. מנעת מעצרי שווא ושמרת על החוק חרף האיומים.',
+            analysis: (g) => 'בלמת עריצות מינהלית והגנת על זכויות חשודים ואזרחים. הוכחת שאכיפת חוק במדינה דמוקרטית תלויה במקצועיות ועמידה איתנה נגד שרירות שלטונית.'
+          },
+          'end_Weak': { 
+            title: "סיום: כניעה לסחיטה", icon: AlertTriangle, color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200',
+            story: (g) => 'נכנעת לשביתת השוטרים והענקת להם חסינות מביקורת כדי שיאבטחו את משחק הכדורגל. השוטרים למדו שהם מעל לחוק.',
+            analysis: (g) => 'פגעת בשוויון בפני החוק במובן העמוק ביותר. מתן פטור בפועל לחוקרים ושוטרים מביקורת של מח"ש מייצר מעמד מיוחס במדינה, בניגוד מוחלט לכללי הדמוקרטיה.'
+          },
+          'end_Strict': { 
+            title: "סיום: החוק מעל הכל", icon: Scale, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200',
+            story: (g) => 'בלמת את שביתת השוטרים הפרועה באיומי פיטורים והבהרת שמח"ש תעשה את עבודתה. המשחק אובטח, והמשטרה נותרה ארגון כפוף לחוק.',
+            analysis: (g) => 'הבהרת שאין אזרח או לובש מדים שמעל לחוק. שמרת על חוקיות המינהל ועל זכותו של הציבור למערכת אכיפה נקייה ומבוקרת.'
+          },
+          'end_Whistleblower': { 
+            title: "סיום: חושף השחיתויות", icon: Trophy, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200',
+            story: (g) => `${g('הודית', 'הודית')} בהדלפת החומרים החסויים כדי לא להפליל אדם חף מפשע. ${g('פוטרת', 'פוטרת')} מהשירות, אך ${g('מונית', 'מונית')} ליושב ראש התנועה לאיכות השלטון.`,
+            analysis: (g) => 'למרות הכשל המשמעתי בהדלפה (פגיעה בטוהר ההליך), ברגע האמת סירבת לפגוע בזכות להליך הוגן של שוטר זוטר והעדפת לקחת אחריות אישית מלאה.'
+          },
+          'end_Collapse': { 
+            title: "סיום: קריסת הדמוקרטיה", icon: AlertOctagon, color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-300',
+            story: (g) => 'סירבת לשלוח כוחות והפקרת את בית המשפט לחסדי ההמון. השופטים הותקפו ומערכת המשפט בעיר שותקה לחלוטין מאימה.',
+            analysis: (g) => 'כשלת במשימתך העליונה. ללא הגנה פיזית על מוסדות השלטון ועצמאות הרשות השופטת, הפרדת הרשויות קורסת ושלטון החוק מתחלף באנרכיה ועריצות.'
+          },
+          'end_Democrat': { 
+            title: "סיום: מגן הדמוקרטיה", icon: Award, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200',
+            story: (g) => `פרסת אלפי שוטרים שהגנו על בית המשפט בגופם. עמדת מול לחצים פוליטיים אדירים, מנעת אלימות ושמרת על טוהר המידות מתחילת המשבר ועד סופו. ${g('מונית', 'מונית')} למפכ"ל הבא.`,
+            analysis: (g) => 'הוכחת הלכה למעשה את מהות שלטון החוק. הגנת על חופש הביטוי מחד, ועל עצמאות הרשות השופטת מאידך, ללא חריגה מסמכות ועם מחויבות טוטאלית לזכויות אדם.'
+          }
+        };
+
+        function App() {
+          const [userData, setUserData] = useState({ name: '', gender: '' });
+          const [currentStage, setCurrentStage] = useState('welcome');
+          const [history, setHistory] = useState([]);
+          const [finalEnding, setFinalEnding] = useState(null);
+          const [questionnaireAnswers, setQuestionnaireAnswers] = useState({ q1: '', q2: '', q3: '', q4: '' });
+
+          // Scroll to top on stage change
+          useEffect(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }, [currentStage]);
+
+          const g = (m, f) => userData.gender === 'F' ? f : m;
+
+          const shuffledOptions = useMemo(() => {
+            if (!SCENARIOS[currentStage]) return [];
+            return [...SCENARIOS[currentStage].options].sort(() => Math.random() - 0.5);
+          }, [currentStage]);
+
+          const handleDecision = (option) => {
+            setHistory([...history, { id: option.id, node: currentStage, text: option.short, feedback: option.feedback, next: option.next }]);
+            setCurrentStage(`feedback_${history.length}`);
+          };
+
+          const handleFeedbackContinue = () => {
+            const lastDecision = history[history.length - 1];
+            if (lastDecision.next.startsWith('end_')) {
+              setFinalEnding(lastDecision.next);
+            }
+            setCurrentStage(lastDecision.next);
+          };
+
+          const resetSimulation = () => {
+            setCurrentStage('welcome');
+            setUserData({ name: '', gender: '' });
+            setHistory([]);
+            setFinalEnding(null);
+            setQuestionnaireAnswers({ q1: '', q2: '', q3: '', q4: '' });
+          };
+
+          const handleDownloadImage = async () => {
+            const element = document.getElementById('investigation-report');
+            if (element && window.html2canvas) {
+              try {
+                const canvas = await window.html2canvas(element, { scale: 2, useCORS: true });
+                const dataUrl = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `תחקיר_מבצעי_${userData.name.replace(/\s+/g, '_')}.png`;
+                link.href = dataUrl;
+                link.click();
+              } catch (err) {
+                console.error('Failed to generate image', err);
+                window.print();
+              }
+            } else {
+              window.print();
+            }
+          };
+
+          // --- Views ---
+          if (currentStage === 'welcome') {
+            return (
+              <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans text-right relative overflow-hidden" dir="rtl">
+                <div className="absolute inset-0 z-0">
+                   <SafeImage src="https://images.unsplash.com/photo-1541888081601-5290bdf73946?auto=format&fit=crop&w=1200&q=80" alt="רקע משטרה" />
+                   <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"></div>
+                </div>
+                
+                <div className="z-10 bg-white/10 backdrop-blur-md p-8 md:p-14 rounded-3xl shadow-2xl max-w-2xl w-full text-center border border-white/20 animate-in zoom-in duration-700">
+                  <Scale className="w-16 h-16 md:w-20 md:h-20 text-blue-400 mx-auto mb-4 md:mb-6 drop-shadow-lg" />
+                  <h1 className="text-4xl md:text-6xl font-black text-white mb-3 md:mb-4 tracking-tight drop-shadow-md">משבר בעיר המעורבת</h1>
+                  <h2 className="text-xl md:text-2xl text-blue-300 font-medium mb-8 md:mb-10 drop-shadow-md">סימולציית קבלת החלטות: שלטון החוק</h2>
+                  <p className="text-slate-300 text-base md:text-xl mb-10 md:mb-12 max-w-lg mx-auto leading-relaxed">
+                    היכנסו לנעליו של מפקד מחוז במשטרה והתמודדו עם דילמות הרות גורל. האם תצליחו לשמור על החוק והסדר מבלי לרמוס את הדמוקרטיה? כל החלטה תוביל אתכם למסלול אחר לחלוטין.
+                  </p>
+                  <button
+                    onClick={() => setCurrentStage('setup')}
+                    className="group relative inline-flex items-center justify-center px-8 md:px-10 py-4 md:py-5 font-bold text-slate-900 bg-white rounded-full hover:bg-slate-100 transition-all shadow-[0_0_30px_rgba(255,255,255,0.2)] hover:shadow-[0_0_50px_rgba(255,255,255,0.4)] hover:-translate-y-1 text-lg md:text-xl w-full md:w-auto"
+                  >
+                    התחלה
+                    <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 mr-2 transition-transform group-hover:-translate-x-2" />
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          if (currentStage === 'setup') {
+            return (
+              <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 font-sans text-right" dir="rtl">
+                <div className="bg-white p-6 md:p-10 rounded-3xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-500 border border-slate-200">
+                  <div className="flex justify-center mb-6">
+                    <div className="bg-slate-100 p-4 rounded-full">
+                      <User className="w-10 h-10 md:w-12 md:h-12 text-slate-700" />
+                    </div>
+                  </div>
+                  <h1 className="text-2xl md:text-3xl font-bold text-center text-slate-800 mb-8">הגדרת פרופיל</h1>
+                  
+                  <div className="mb-6">
+                    <label className="block text-slate-700 font-medium mb-2">שם מלא</label>
+                    <input
+                      type="text"
+                      value={userData.name}
+                      onChange={e => setUserData({...userData, name: e.target.value})}
+                      className="w-full border-2 border-slate-200 p-3 md:p-4 rounded-xl focus:border-slate-500 focus:ring-0 transition-colors text-base md:text-lg"
+                      placeholder="הכנס/י שם..."
+                    />
+                  </div>
+                  
+                  <div className="mb-8 md:mb-10">
+                    <label className="block text-slate-700 font-medium mb-2">מגדר</label>
+                    <div className="flex gap-3 md:gap-4">
+                      <button
+                        onClick={() => setUserData({...userData, gender: 'M'})}
+                        className={`flex-1 py-3 md:py-4 rounded-xl font-bold text-base md:text-lg border-2 transition-all ${userData.gender === 'M' ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}
+                      >
+                        זכר
+                      </button>
+                      <button
+                        onClick={() => setUserData({...userData, gender: 'F'})}
+                        className={`flex-1 py-3 md:py-4 rounded-xl font-bold text-base md:text-lg border-2 transition-all ${userData.gender === 'F' ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'}`}
+                      >
+                        נקבה
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={() => setCurrentStage('1')}
+                    disabled={!userData.name || !userData.gender}
+                    className="w-full bg-slate-900 text-white py-3 md:py-4 rounded-xl font-bold text-base md:text-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                  >
+                    כניסה לחפ"ק
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          if (currentStage.startsWith('feedback_')) {
+            const lastDecision = history[history.length - 1];
+            const fb = lastDecision.feedback;
+            const isEndingNext = lastDecision.next.startsWith('end_');
+
+            return (
+              <div dir="rtl" className="min-h-screen bg-slate-50 font-sans text-right pb-10">
+                <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm p-4">
+                  <div className="max-w-3xl mx-auto flex items-center gap-2">
+                    <Scale className="w-5 h-5 md:w-6 md:h-6 text-slate-700" />
+                    <span className="font-bold text-gray-900 text-base md:text-lg truncate">ניתוח החלטה</span>
+                  </div>
+                </header>
+                <main className="max-w-3xl mx-auto px-4 mt-8">
+                  <div className="animate-in zoom-in-95 duration-300">
+                    <div className={`bg-white rounded-2xl md:rounded-3xl shadow-2xl border-t-8 overflow-hidden ${fb.success ? 'border-emerald-500' : 'border-rose-500'}`}>
+                      <div className="p-6 md:p-8">
+                        <div className="flex items-center gap-3 md:gap-4 mb-5 md:mb-6">
+                          {fb.success ? <CheckCircle className="w-8 h-8 md:w-10 md:h-10 text-emerald-500 flex-shrink-0" /> : <ShieldAlert className="w-8 h-8 md:w-10 md:h-10 text-rose-500 flex-shrink-0" />}
+                          <h2 className="text-xl md:text-2xl font-bold text-slate-900">{fb.title}</h2>
+                        </div>
+                        
+                        <p className="text-base md:text-lg text-slate-700 mb-6 md:mb-8 leading-relaxed">
+                          {typeof fb.story === 'function' ? fb.story(g) : fb.story}
+                        </p>
+
+                        <div className="bg-slate-50 p-5 md:p-6 rounded-xl border border-slate-200 mb-6 md:mb-8">
+                          <h3 className="flex items-center text-base md:text-lg font-bold text-slate-800 mb-3">
+                            <BookOpen className="w-4 h-4 md:w-5 md:h-5 ml-2 text-slate-600" />
+                            ניתוח אזרחי:
+                          </h3>
+                          <p className="text-sm md:text-base text-slate-700 leading-relaxed font-medium">
+                            {typeof fb.analysis === 'function' ? fb.analysis(g) : fb.analysis}
+                          </p>
+                        </div>
+
+                        <div className="flex justify-end pt-5 md:pt-6 border-t border-slate-100">
+                          <button
+                            onClick={handleFeedbackContinue}
+                            className="w-full md:w-auto bg-slate-800 text-white px-6 md:px-8 py-3 rounded-xl font-bold hover:bg-slate-700 transition-colors flex items-center justify-center shadow-md hover:shadow-lg text-base"
+                          >
+                            {isEndingNext ? 'לסיום התרחיש' : 'המשך בציר הזמן'}
+                            <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </main>
+              </div>
+            );
+          }
+
+          return (
+            <div dir="rtl" className="min-h-screen bg-slate-50 font-sans text-right pb-10">
+              <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+                <div className="max-w-4xl mx-auto px-4 h-14 md:h-16 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Scale className="w-5 h-5 md:w-6 md:h-6 text-slate-700" />
+                    <span className="font-bold text-gray-900 text-base md:text-lg truncate">חמ"ל פיקוד מחוז</span>
+                  </div>
+                  <div className="text-xs md:text-sm font-medium text-gray-500 whitespace-nowrap">
+                    {currentStage.startsWith('end') ? 'סיום תרחיש' : currentStage === 'questionnaire' || currentStage === 'report' ? 'תחקיר' : `שלב ${history.length + 1}`}
+                  </div>
+                </div>
+                {history.length > 0 && (
+                  <div className="bg-slate-800 py-3 md:py-4 px-4 shadow-inner overflow-x-auto hide-scrollbar">
+                    <div className="max-w-4xl mx-auto flex items-center gap-2 w-max min-w-full">
+                      <span className="font-semibold text-slate-400 ml-2 text-xs md:text-sm">החלטות:</span>
+                      {history.map((h, i) => (
+                        <React.Fragment key={i}>
+                          <div className="bg-slate-700 px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-slate-100 font-medium border border-slate-600 shadow-sm flex items-center text-xs md:text-sm whitespace-nowrap">
+                            <span className="bg-slate-600 text-slate-300 rounded-full w-4 h-4 md:w-5 md:h-5 flex items-center justify-center text-[10px] md:text-xs ml-1.5 md:ml-2">{i + 1}</span>
+                            {h.text}
+                          </div>
+                          {i < history.length - 1 && <ChevronLeft className="w-3 h-3 md:w-4 md:h-4 text-slate-500 flex-shrink-0" />}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </header>
+
+              <main className="max-w-3xl mx-auto px-4 mt-6 md:mt-8">
+
+                {SCENARIOS[currentStage] && (() => {
+                  const data = SCENARIOS[currentStage];
+                  return (
+                    <div className="animate-in slide-in-from-bottom-4 duration-500">
+                      <div className="mb-4 md:mb-6 flex items-center text-slate-800">
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-lg md:text-xl mr-2 md:mr-3 ml-2 md:ml-3 border-2 border-slate-300 shadow-sm flex-shrink-0">
+                          {history.length + 1}
+                        </div>
+                        <h2 className="text-xl md:text-2xl font-bold">{data.title}</h2>
+                      </div>
+                      
+                      <div className="bg-white rounded-2xl md:rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-6 md:mb-8">
+                        <div className="h-48 md:h-64 w-full relative bg-slate-900">
+                          <SafeImage src={data.imageUrl} alt={data.title} />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent opacity-80"></div>
+                          <div className="absolute bottom-3 md:bottom-4 right-4 md:right-6 text-slate-200 text-xs md:text-sm font-medium bg-slate-900/50 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                            {data.time}
+                          </div>
+                        </div>
+                        
+                        <div className="p-5 md:p-8">
+                          {data.content({ g, name: userData.name })}
+                          
+                          <h4 className="text-base md:text-lg font-bold text-slate-900 mb-4 border-b pb-2">כיצד {g('תפעל', 'תפעלי')}?</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                            {shuffledOptions.map((opt) => (
+                              <button
+                                key={opt.id}
+                                onClick={() => handleDecision(opt)}
+                                className="text-right p-4 md:p-5 rounded-xl border-2 border-slate-200 hover:border-slate-500 hover:bg-slate-50 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-slate-400"
+                              >
+                                <span className="font-bold text-slate-800 block text-base md:text-lg group-hover:text-slate-900">
+                                  {typeof opt.text === 'function' ? opt.text(g) : opt.text}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {ENDINGS[currentStage] && (() => {
+                  const end = ENDINGS[currentStage];
+                  const Icon = end.icon;
+                  return (
+                    <div className="animate-in slide-in-from-bottom-8 duration-700">
+                      <div className={`bg-white rounded-2xl md:rounded-3xl shadow-2xl border-4 overflow-hidden ${end.border}`}>
+                        <div className={`${end.bg} p-8 md:p-10 text-center border-b ${end.border}`}>
+                          <div className="flex justify-center mb-4">
+                            <Icon className={`w-12 h-12 md:w-16 md:h-16 ${end.color}`} />
+                          </div>
+                          <h1 className={`text-2xl md:text-3xl font-black ${end.color} mb-2`}>{end.title}</h1>
+                          <p className="text-sm md:text-base text-slate-600 font-medium">{g('מפקד','מפקדת')} מחוז: {userData.name}</p>
+                        </div>
+                        
+                        <div className="p-6 md:p-10">
+                          <h3 className="text-lg md:text-xl font-bold text-slate-800 mb-3">תוצאות המשבר:</h3>
+                          <p className="text-base md:text-lg text-slate-700 mb-6 md:mb-8 leading-relaxed border-b pb-6 md:pb-8">
+                            {typeof end.story === 'function' ? end.story(g) : end.story}
+                          </p>
+
+                          <h3 className="flex items-center text-lg md:text-xl font-bold text-slate-800 mb-3">
+                            <Scale className="w-5 h-5 md:w-6 md:h-6 ml-2 text-slate-600" />
+                            שורה תחתונה באזרחות:
+                          </h3>
+                          <p className="text-base md:text-lg text-slate-700 leading-relaxed font-medium bg-slate-50 p-5 md:p-6 rounded-xl border border-slate-200 mb-8 md:mb-10">
+                            {typeof end.analysis === 'function' ? end.analysis(g) : end.analysis}
+                          </p>
+
+                          <div className="flex flex-col md:flex-row justify-center gap-4">
+                            <button
+                              onClick={() => setCurrentStage('questionnaire')}
+                              className="w-full md:w-auto text-white font-bold flex items-center justify-center transition-colors bg-blue-600 px-6 py-3 md:py-4 rounded-xl md:rounded-full hover:bg-blue-700 shadow-md text-base"
+                            >
+                              <FileText className="w-5 h-5 ml-2" />
+                              מעבר לתחקיר אישי
+                            </button>
+                            <button
+                              onClick={resetSimulation}
+                              className="w-full md:w-auto text-slate-500 hover:text-slate-800 font-bold flex items-center justify-center transition-colors bg-white border-2 border-slate-200 px-6 py-3 md:py-4 rounded-xl md:rounded-full hover:bg-slate-50 shadow-sm text-base"
+                            >
+                              התחלת סימולציה מחדש
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {currentStage === 'questionnaire' && (
+                  <div className="animate-in fade-in duration-500 pb-10">
+                    <div className="bg-white p-8 md:p-10 rounded-2xl md:rounded-3xl shadow-xl border border-slate-200">
+                      <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-6 border-b-2 border-slate-100 pb-4">תחקיר</h2>
+                      <p className="text-slate-600 mb-8 text-lg">ענה/י על השאלות הבאות. תשובותיך יצורפו לדף התחקיר המסכם שיופק בשלב הבא.</p>
+                      
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-lg font-bold text-slate-800 mb-2">
+                            1. {g('הצג', 'הציגי')} שלושה דברים שהתחדשו לך במהלך הפעילות.
+                          </label>
+                          <textarea 
+                            className="w-full border-2 border-slate-200 p-4 rounded-xl focus:border-blue-500 focus:ring-0 transition-colors text-base"
+                            rows="3"
+                            value={questionnaireAnswers.q1}
+                            onChange={(e) => setQuestionnaireAnswers({...questionnaireAnswers, q1: e.target.value})}
+                          ></textarea>
+                        </div>
+                        <div>
+                          <label className="block text-lg font-bold text-slate-800 mb-2">
+                            2. {g('בחר', 'בחרי')} את אחת ההחלטות שלך לאורך הפעילות {g('ונמק', 'ונמקי')} אותה.
+                          </label>
+                          <textarea 
+                            className="w-full border-2 border-slate-200 p-4 rounded-xl focus:border-blue-500 focus:ring-0 transition-colors text-base"
+                            rows="3"
+                            value={questionnaireAnswers.q2}
+                            onChange={(e) => setQuestionnaireAnswers({...questionnaireAnswers, q2: e.target.value})}
+                          ></textarea>
+                        </div>
+                        <div>
+                          <label className="block text-lg font-bold text-slate-800 mb-2">
+                            3. בדיעבד, מה היית {g('עושה', 'עושה')} אחרת? מדוע?
+                          </label>
+                          <textarea 
+                            className="w-full border-2 border-slate-200 p-4 rounded-xl focus:border-blue-500 focus:ring-0 transition-colors text-base"
+                            rows="3"
+                            value={questionnaireAnswers.q3}
+                            onChange={(e) => setQuestionnaireAnswers({...questionnaireAnswers, q3: e.target.value})}
+                          ></textarea>
+                        </div>
+                        <div>
+                          <label className="block text-lg font-bold text-slate-800 mb-2">
+                            4. {g('הסבר', 'הסבירי')} במילים שלך: מדוע במדינה דמוקרטית הכרחי לשמור על שלטון החוק?
+                          </label>
+                          <textarea 
+                            className="w-full border-2 border-slate-200 p-4 rounded-xl focus:border-blue-500 focus:ring-0 transition-colors text-base"
+                            rows="3"
+                            value={questionnaireAnswers.q4}
+                            onChange={(e) => setQuestionnaireAnswers({...questionnaireAnswers, q4: e.target.value})}
+                          ></textarea>
+                        </div>
+                      </div>
+
+                      <div className="mt-10 flex justify-end">
+                        <button
+                          onClick={() => setCurrentStage('report')}
+                          disabled={!questionnaireAnswers.q1.trim() || !questionnaireAnswers.q2.trim() || !questionnaireAnswers.q3.trim() || !questionnaireAnswers.q4.trim()}
+                          className="w-full md:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors flex items-center justify-center shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+                        >
+                          המשך להפקת דף התחקיר
+                          <ArrowLeft className="w-5 h-5 mr-2" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {currentStage === 'report' && finalEnding && ENDINGS[finalEnding] && (() => {
+                  const end = ENDINGS[finalEnding];
+                  return (
+                    <div className="animate-in fade-in duration-500 pb-10">
+                      <div className="mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <button onClick={() => setCurrentStage('questionnaire')} className="text-slate-600 hover:text-slate-900 flex items-center font-bold bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200 w-full md:w-auto justify-center">
+                          <ArrowLeft className="w-5 h-5 ml-2" /> חזור לשאלון
+                        </button>
+                        <button onClick={handleDownloadImage} className="bg-emerald-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-emerald-700 flex items-center shadow-md w-full md:w-auto justify-center">
+                          <Download className="w-5 h-5 ml-2" /> הורד דף תחקיר כתמונה
+                        </button>
+                      </div>
+
+                      <div id="investigation-report" className="bg-white p-8 md:p-12 shadow-2xl border border-slate-200 relative overflow-hidden rounded-xl">
+                        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
+                          <Scale className="w-[30rem] h-[30rem]" />
+                        </div>
+
+                        <div className="relative z-10">
+                          <div className="border-b-4 border-slate-800 pb-6 mb-8 text-center">
+                            <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2 tracking-tight">משטרת ישראל - מחוז מרכז</h1>
+                            <h2 className="text-xl md:text-2xl font-bold text-slate-600">דף תחקיר מבצעי מסכם</h2>
+                          </div>
+
+                          <div className="bg-slate-50 p-6 rounded-lg border border-slate-200 mb-10 flex flex-col md:flex-row justify-between gap-4">
+                            <div>
+                              <p className="text-lg text-slate-800 mb-2"><span className="font-bold">שם {g('המפקד', 'המפקדת')}:</span> {userData.name}</p>
+                              <p className="text-lg text-slate-800"><span className="font-bold">נושא התחקיר:</span> התמודדות עם משבר בעיר המעורבת</p>
+                            </div>
+                            <div className="md:text-left text-slate-600 font-medium flex items-end">
+                              <p>תאריך הפקה: {new Date().toLocaleDateString('he-IL')}</p>
+                            </div>
+                          </div>
+
+                          <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b-2 border-slate-200 pb-2">פירוט החלטות וניתוח רטרוספקטיבי:</h3>
+                          <div className="space-y-6 mb-12">
+                            {history.map((h, i) => (
+                              <div key={i} className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden">
+                                <div className={`absolute top-0 right-0 w-1.5 h-full ${h.feedback.success ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+                                <div className="flex items-center gap-3 mb-3">
+                                  <div className="w-8 h-8 bg-slate-100 text-slate-700 rounded-full flex items-center justify-center font-bold border border-slate-300">{i+1}</div>
+                                  <h4 className="text-xl font-bold text-slate-800">{SCENARIOS[h.node].title}</h4>
+                                </div>
+                                <p className="text-lg text-slate-800 mb-4 pr-11"><span className="font-bold">החלטה שהתקבלה:</span> {h.text}</p>
+                                <div className="bg-slate-50 p-4 rounded text-slate-700 border border-slate-100 mr-11">
+                                  <span className="font-bold block mb-1">ניתוח אזרחי:</span>
+                                  {typeof h.feedback.analysis === 'function' ? h.feedback.analysis(g) : h.feedback.analysis}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <h3 className="text-2xl font-bold text-slate-800 mb-6 border-b-2 border-slate-200 pb-2">מסקנות ותוצאה סופית:</h3>
+                          <div className={`p-6 rounded-lg border-2 ${end.border} ${end.bg}`}>
+                            <h4 className={`text-2xl font-black ${end.color} mb-4 flex items-center gap-2`}>
+                              <end.icon className="w-6 h-6" />
+                              {end.title}
+                            </h4>
+                            <p className="text-lg text-slate-800 mb-4 leading-relaxed"><span className="font-bold block mb-1">השתלשלות האירועים:</span> {typeof end.story === 'function' ? end.story(g) : end.story}</p>
+                            <div className="bg-white/50 p-4 rounded border border-white/50">
+                              <p className="text-lg text-slate-800 leading-relaxed"><span className="font-bold block mb-1">שורה תחתונה:</span> {typeof end.analysis === 'function' ? end.analysis(g) : end.analysis}</p>
+                            </div>
+                          </div>
+                          
+                          <h3 className="text-2xl font-bold text-slate-800 mt-12 mb-6 border-b-2 border-slate-200 pb-2">תחקיר אישי:</h3>
+                          <div className="space-y-6 mb-12">
+                            <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                              <p className="font-bold text-slate-800 mb-2">1. {g('הצג', 'הציגי')} שלושה דברים שהתחדשו לך במהלך הפעילות.</p>
+                              <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{questionnaireAnswers.q1}</p>
+                            </div>
+                            <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                              <p className="font-bold text-slate-800 mb-2">2. {g('בחר', 'בחרי')} את אחת ההחלטות שלך לאורך הפעילות {g('ונמק', 'ונמקי')} אותה.</p>
+                              <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{questionnaireAnswers.q2}</p>
+                            </div>
+                            <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                              <p className="font-bold text-slate-800 mb-2">3. בדיעבד, מה היית {g('עושה', 'עושה')} אחרת? מדוע?</p>
+                              <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{questionnaireAnswers.q3}</p>
+                            </div>
+                            <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                              <p className="font-bold text-slate-800 mb-2">4. {g('הסבר', 'הסבירי')} במילים שלך: מדוע במדינה דמוקרטית הכרחי לשמור על שלטון החוק?</p>
+                              <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{questionnaireAnswers.q4}</p>
+                            </div>
+                          </div>
+
+                          <div className="mt-12 text-center text-slate-400 text-sm">
+                            <p>המסמך הופק אוטומטית באמצעות מערכת לומדת "משבר בעיר המעורבת"</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+              </main>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
